@@ -7,6 +7,7 @@ import edu.berkeley.cs186.database.databox.DataBox;
 import edu.berkeley.cs186.database.databox.Type;
 import edu.berkeley.cs186.database.memory.BufferManager;
 import edu.berkeley.cs186.database.memory.Page;
+import edu.berkeley.cs186.database.table.Record;
 import edu.berkeley.cs186.database.table.RecordId;
 
 import java.nio.ByteBuffer;
@@ -114,8 +115,8 @@ class LeafNode extends BPlusNode {
     LeafNode(BPlusTreeMetadata metadata, BufferManager bufferManager, List<DataBox> keys,
              List<RecordId> rids, Optional<Long> rightSibling, LockContext treeContext) {
         this(metadata, bufferManager, bufferManager.fetchNewPage(treeContext, metadata.getPartNum()),
-             keys, rids,
-             rightSibling, treeContext);
+                keys, rids,
+                rightSibling, treeContext);
     }
 
     /**
@@ -181,21 +182,20 @@ class LeafNode extends BPlusNode {
 
             keys = keys.subList(0, metadata.getOrder());
             rids = rids.subList(0, metadata.getOrder());
-            sync();
 
-            Page new_page = bufferManager.fetchNewPage(treeContext, metadata.getPartNum());
-            LeafNode new_rightSibling = new LeafNode(metadata, bufferManager, new_page, right_keys, right_rids,
+            LeafNode new_rightSibling = new LeafNode(metadata, bufferManager, right_keys, right_rids,
                     rightSibling, treeContext);
 
-            rightSibling = Optional.of(new_page.getPageNum());
-            return Optional.of(new Pair(right_keys.get(0), new_page.getPageNum()));
+            rightSibling = Optional.of(new_rightSibling.getPage().getPageNum());
+            sync();
+            return Optional.of(new Pair(right_keys.get(0), new_rightSibling.getPage().getPageNum()));
         }
     }
 
     // See BPlusNode.bulkLoad.
     @Override
     public Optional<Pair<DataBox, Long>> bulkLoad(Iterator<Pair<DataBox, RecordId>> data,
-            float fillFactor) {
+                                                  float fillFactor) {
         // TODO(proj2): implement
 
         return Optional.empty();
@@ -436,9 +436,9 @@ class LeafNode extends BPlusNode {
         }
         LeafNode n = (LeafNode) o;
         return page.getPageNum() == n.page.getPageNum() &&
-               keys.equals(n.keys) &&
-               rids.equals(n.rids) &&
-               rightSibling.equals(n.rightSibling);
+                keys.equals(n.keys) &&
+                rids.equals(n.rids) &&
+                rightSibling.equals(n.rightSibling);
     }
 
     @Override

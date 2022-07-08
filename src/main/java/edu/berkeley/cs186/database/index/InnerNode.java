@@ -11,6 +11,8 @@ import edu.berkeley.cs186.database.table.RecordId;
 
 import java.nio.ByteBuffer;
 import java.util.*;
+import javax.swing.text.html.Option;
+import javax.xml.crypto.Data;
 
 /**
  * A inner node of a B+ tree. Every inner node in a B+ tree of order d stores
@@ -52,7 +54,7 @@ class InnerNode extends BPlusNode {
     InnerNode(BPlusTreeMetadata metadata, BufferManager bufferManager, List<DataBox> keys,
               List<Long> children, LockContext treeContext) {
         this(metadata, bufferManager, bufferManager.fetchNewPage(treeContext, metadata.getPartNum()),
-             keys, children, treeContext);
+                keys, children, treeContext);
     }
 
     /**
@@ -124,19 +126,19 @@ class InnerNode extends BPlusNode {
                 children = children.subList(0, metadata.getOrder() + 1);
                 sync();
 
-                Page new_page = bufferManager.fetchNewPage(treeContext, metadata.getPartNum());
-                InnerNode new_rightSibling = new InnerNode(metadata, bufferManager, new_page, right_keys, right_children,
+                InnerNode new_rightSibling = new InnerNode(metadata, bufferManager, right_keys, right_children,
                         treeContext);
 
-                return Optional.of(new Pair(split_key, new_page.getPageNum()));
+                return Optional.of(new Pair(split_key, new_rightSibling.getPage().getPageNum()));
             }
         }
+
     }
 
     // See BPlusNode.bulkLoad.
     @Override
     public Optional<Pair<DataBox, Long>> bulkLoad(Iterator<Pair<DataBox, RecordId>> data,
-            float fillFactor) {
+                                                  float fillFactor) {
         // TODO(proj2): implement
 
         return Optional.empty();
@@ -318,7 +320,7 @@ class InnerNode extends BPlusNode {
             long childPageNum = child.getPage().getPageNum();
             lines.add(child.toDot());
             lines.add(String.format("  \"node%d\":f%d -> \"node%d\";",
-                                    pageNum, i, childPageNum));
+                    pageNum, i, childPageNum));
         }
 
         return String.join("\n", lines);
@@ -402,8 +404,8 @@ class InnerNode extends BPlusNode {
         }
         InnerNode n = (InnerNode) o;
         return page.getPageNum() == n.page.getPageNum() &&
-               keys.equals(n.keys) &&
-               children.equals(n.children);
+                keys.equals(n.keys) &&
+                children.equals(n.children);
     }
 
     @Override
